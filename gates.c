@@ -3,7 +3,7 @@
 struct add_result {
     int sum;
     int carry;
-};
+}; typedef add_result;
 
 int nand(int a, int b) {
     return !(a && b);
@@ -34,10 +34,10 @@ struct add_result half_adder(int a, int b) {
     return r;
 }
 
-struct add_result full_adder(int a, int b, int cin) {
-    struct add_result h1 = half_adder(a, b); 
-    struct add_result h2 = half_adder(h1.sum, cin); 
-    struct add_result r;
+add_result full_adder(int a, int b, int cin) {
+    add_result h1 = half_adder(a, b); 
+    add_result h2 = half_adder(h1.sum, cin); 
+    add_result r;
     r.carry = or_gate(h1.carry, h2.carry); 
     r.sum = h2.sum;
     return r;
@@ -80,7 +80,7 @@ int main(void) {
     printf("a b | carry sum\n");
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
-            struct add_result r = half_adder(i, j);
+            add_result r = half_adder(i, j);
             printf("%d %d | %d %d\n", i, j, r.carry, r.sum);
         }
     }
@@ -89,7 +89,7 @@ int main(void) {
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
             for (int k = 0; k <= 1; k++) {
-                struct add_result r = full_adder(i, j, k);
+                add_result r = full_adder(i, j, k);
                 printf("%d %d %d   | %d %d  \n", i, j, k, r.carry, r.sum);
             }
         }
@@ -102,7 +102,7 @@ int main(void) {
 
     printf("Final Add Result: ");
     for (int i = 0; i < 4; i++) {
-        struct add_result r = full_adder(a[i], b[i], carry);
+        add_result r = full_adder(a[i], b[i], carry);
         result[i] = r.sum;
         carry = r.carry;
     }
@@ -120,7 +120,7 @@ int main(void) {
 
     printf("\nFinal Subtract Result: ");
     for (int i = 0; i < 4; i++) {
-        struct add_result r = full_adder(c[i], not_gate(d[i]), carry1);
+        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
         result1[i] = r.sum;
         carry1 = r.carry;
     }
@@ -142,7 +142,7 @@ int main(void) {
             }
 
            for (int z = 0; z < 4; z++) {
-                struct add_result r = full_adder(a[z], b[z], carry);
+                add_result r = full_adder(a[z], b[z], carry);
                 result[z] = r.sum;
                 carry = r.carry;
            }
