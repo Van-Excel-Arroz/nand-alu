@@ -146,7 +146,7 @@ int main(void) {
     printf("errors: %d\n", errors);
 
        
-    int c[4] = {1, 0 , 1, 0}; // 5
+    int c[4] = {1, 1 , 1, 0}; // 7
     int d[4] = {1, 1, 0, 0}; // 3
     int result1[4];
     int carry1 = 1;
@@ -159,9 +159,37 @@ int main(void) {
     }
 
     for (int i = 3; i >= 0; i--) {
-        printf("%d, ", result1[i]);
+        printf("%d, ", result1[i]); 
     }
     printf("\nFinal carry: %d\n", carry1);
+
+    int errors1 = 0;
+    for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 16; y++) {
+            int a[4], b[4], result[4];
+            int carry = 1;        
+            for (int z = 0; z < 4; z++) {
+                a[z] = (x >> z) & 1;
+                b[z] = (y >> z) & 1;
+            }
+
+           for (int z = 0; z < 4; z++) {
+                add_result r = full_adder(a[z], not_gate(b[z]), carry);
+                result[z] = r.sum;
+                carry = r.carry;
+           }
+
+            int expected = (x - y) & 15;
+
+            for (int z = 0; z < 4; z++) {
+                int expected_bit = (expected >> z) & 1;
+                if (result[z] != expected_bit) {
+                    errors1++;
+                }
+            }
+        }
+    }   
+    printf("errors: %d\n", errors1);
 
     return 0;
 }
