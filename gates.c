@@ -100,16 +100,35 @@ int main(void) {
     int result[4];
     int carry = 0;
 
+    printf("Final Add Result: ");
     for (int i = 0; i < 4; i++) {
         struct add_result r = full_adder(a[i], b[i], carry);
         result[i] = r.sum;
         carry = r.carry;
     }
-
+    
     for (int i = 3; i >= 0; i--) {
         printf("%d, ", result[i]);
     }
+
     printf("\nFinal carry: %d\n", carry);
+    
+    int c[4] = {1, 0 , 1, 0}; // 5
+    int d[4] = {1, 1, 0, 0}; // 3
+    int result1[4];
+    int carry1 = 1;
+
+    printf("\nFinal Subtract Result: ");
+    for (int i = 0; i < 4; i++) {
+        struct add_result r = full_adder(c[i], not_gate(d[i]), carry1);
+        result1[i] = r.sum;
+        carry1 = r.carry;
+    }
+
+    for (int i = 3; i >= 0; i--) {
+        printf("%d, ", result1[i]);
+    }
+    printf("\nFinal carry: %d\n", carry1);
 
 
     int errors = 0;
