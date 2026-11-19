@@ -27,8 +27,8 @@ int xor_gate(int a, int b) {
     return or_gate(x, y);
 }
 
-struct add_result half_adder(int a, int b) {
-    struct add_result r;
+add_result half_adder(int a, int b) {
+    add_result r;
     r.sum = xor_gate(a, b);
     r.carry = and_gate(a, b);
     return r;
