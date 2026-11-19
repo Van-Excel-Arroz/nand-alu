@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-struct add_result {
+typedef struct add_result {
     int sum;
     int carry;
-}; typedef add_result;
+} add_result;
 
 int nand(int a, int b) {
     return !(a && b);
@@ -112,25 +112,7 @@ int main(void) {
     }
 
     printf("\nFinal carry: %d\n", carry);
-    
-    int c[4] = {1, 0 , 1, 0}; // 5
-    int d[4] = {1, 1, 0, 0}; // 3
-    int result1[4];
-    int carry1 = 1;
-
-    printf("\nFinal Subtract Result: ");
-    for (int i = 0; i < 4; i++) {
-        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
-        result1[i] = r.sum;
-        carry1 = r.carry;
-    }
-
-    for (int i = 3; i >= 0; i--) {
-        printf("%d, ", result1[i]);
-    }
-    printf("\nFinal carry: %d\n", carry1);
-
-
+ 
     int errors = 0;
     for (int x = 0; x < 16; x++) {
         for (int y = 0; y < 16; y++) {
@@ -162,6 +144,24 @@ int main(void) {
         }
     }   
     printf("errors: %d\n", errors);
+
+       
+    int c[4] = {1, 0 , 1, 0}; // 5
+    int d[4] = {1, 1, 0, 0}; // 3
+    int result1[4];
+    int carry1 = 1;
+
+    printf("\nFinal Subtract Result: ");
+    for (int i = 0; i < 4; i++) {
+        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
+        result1[i] = r.sum;
+        carry1 = r.carry;
+    }
+
+    for (int i = 3; i >= 0; i--) {
+        printf("%d, ", result1[i]);
+    }
+    printf("\nFinal carry: %d\n", carry1);
 
     return 0;
 }
