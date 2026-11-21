@@ -1,4 +1,7 @@
 #include <stdio.h>
+#define BIT_WIDTH 4
+#define NUM_VALUES (1 << BIT_WIDTH)
+#define MAX_VALUE (NUM_VALUES - 1)
 
 typedef struct add_result {
     int sum;
@@ -95,35 +98,36 @@ int main(void) {
         }
     }
 
-    int a[4] = {1, 0 , 1, 0}; // 5
-    int b[4] = {1, 1, 0, 0}; // 3
-    int result[4];
+    int a[BIT_WIDTH] = {1, 0 , 1, 0}; // 5
+    int b[BIT_WIDTH] = {1, 1, 0, 0}; // 3
+    int result[BIT_WIDTH];
     int carry = 0;
 
     printf("Final Add Result: ");
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < BIT_WIDTH; i++) {
         add_result r = full_adder(a[i], b[i], carry);
         result[i] = r.sum;
         carry = r.carry;
     }
     
-    for (int i = 3; i >= 0; i--) {
+    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
         printf("%d, ", result[i]);
     }
 
     printf("\nFinal carry: %d\n", carry);
- 
+
+    
     int errors = 0;
-    for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-            int a[4], b[4], result[4];
+    for (int x = 0; x < NUM_VALUES; x++) {
+        for (int y = 0; y < NUM_VALUES; y++) {
+            int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
             int carry = 0;        
-            for (int z = 0; z < 4; z++) {
+            for (int z = 0; z < BIT_WIDTH; z++) {
                 a[z] = (x >> z) & 1;
                 b[z] = (y >> z) & 1;
             }
 
-           for (int z = 0; z < 4; z++) {
+           for (int z = 0; z < BIT_WIDTH; z++) {
                 add_result r = full_adder(a[z], b[z], carry);
                 result[z] = r.sum;
                 carry = r.carry;
@@ -131,14 +135,14 @@ int main(void) {
 
             int expected = x + y;
 
-            for (int z = 0; z < 4; z++) {
+            for (int z = 0; z < BIT_WIDTH; z++) {
                 int expected_bit = (expected >> z) & 1;
                 if (result[z] != expected_bit) {
                     errors++;
                 }
             }
 
-            if (carry != ((expected >> 4) & 1)) {
+            if (carry != ((expected >> BIT_WIDTH) & 1)) {
                 errors++;
             }
         }
@@ -146,42 +150,42 @@ int main(void) {
     printf("errors: %d\n", errors);
 
        
-    int c[4] = {1, 1 , 1, 0}; // 7
-    int d[4] = {1, 1, 0, 0}; // 3
-    int result1[4];
+    int c[BIT_WIDTH] = {1, 1 , 1, 0}; // 7
+    int d[BIT_WIDTH] = {1, 1, 0, 0}; // 3
+    int result1[BIT_WIDTH];
     int carry1 = 1;
 
     printf("\nFinal Subtract Result: ");
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < BIT_WIDTH; i++) {
         add_result r = full_adder(c[i], not_gate(d[i]), carry1);
         result1[i] = r.sum;
         carry1 = r.carry;
     }
 
-    for (int i = 3; i >= 0; i--) {
+    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
         printf("%d, ", result1[i]); 
     }
     printf("\nFinal carry: %d\n", carry1);
 
     int errors1 = 0;
-    for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-            int a[4], b[4], result[4];
+    for (int x = 0; x < NUM_VALUES; x++) {
+        for (int y = 0; y < NUM_VALUES; y++) {
+            int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
             int carry = 1;        
-            for (int z = 0; z < 4; z++) {
+            for (int z = 0; z < BIT_WIDTH; z++) {
                 a[z] = (x >> z) & 1;
                 b[z] = (y >> z) & 1;
             }
 
-           for (int z = 0; z < 4; z++) {
+           for (int z = 0; z < BIT_WIDTH; z++) {
                 add_result r = full_adder(a[z], not_gate(b[z]), carry);
                 result[z] = r.sum;
                 carry = r.carry;
            }
 
-            int expected = (x - y) & 15;
+            int expected = (x - y) & MAX_VALUE;
 
-            for (int z = 0; z < 4; z++) {
+            for (int z = 0; z < BIT_WIDTH; z++) {
                 int expected_bit = (expected >> z) & 1;
                 if (result[z] != expected_bit) {
                     errors1++;
