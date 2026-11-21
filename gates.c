@@ -46,6 +46,25 @@ add_result full_adder(int a, int b, int cin) {
     return r;
 }
 
+void to_bits(int value, int bits[BIT_WIDTH]) {
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        bits[i] = (value >> i) & 1;
+    }
+}
+
+int from_bits(const int bits[BIT_WIDTH]) {
+    int value = 0;
+    int current_bit_value = 1;
+
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        if (bits[i] == 1) {
+            value += current_bit_value;
+        }
+        current_bit_value *= 2;
+    }
+    return value;
+}
+
 int main(void) {
     printf("a b | nand\n");
     for (int i = 0; i <= 1; i++) {
@@ -98,34 +117,53 @@ int main(void) {
         }
     }
 
-    int a[BIT_WIDTH] = {1, 0 , 1, 0}; // 5
-    int b[BIT_WIDTH] = {1, 1, 0, 0}; // 3
+    int a[BIT_WIDTH];
+    int b[BIT_WIDTH];
+    to_bits(5, a);
+    to_bits(3, b);
     int result[BIT_WIDTH];
     int carry = 0;
 
-    printf("Final Add Result: ");
     for (int i = 0; i < BIT_WIDTH; i++) {
         add_result r = full_adder(a[i], b[i], carry);
         result[i] = r.sum;
         carry = r.carry;
     }
     
+    printf("\nFinal Add Result (Binary): ");
     for (int i = BIT_WIDTH - 1; i >= 0; i--) {
         printf("%d, ", result[i]);
     }
-
+    printf("\nFinal Add Result (Decimal): %d", from_bits(result));
     printf("\nFinal carry: %d\n", carry);
+       
+    int c[BIT_WIDTH];
+    int d[BIT_WIDTH];
+    to_bits(7, c);
+    to_bits(3, d);
+    int result1[BIT_WIDTH];
+    int carry1 = 1;
 
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
+        result1[i] = r.sum;
+        carry1 = r.carry;
+    }
     
-    int errors = 0;
+    printf("\nFinal Subtract Result (Binary): ");
+    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
+        printf("%d, ", result1[i]); 
+    }
+    printf("\nFinal Subtract Result (Decimal): %d", from_bits(result1));
+    printf("\nFinal carry: %d\n", carry1);
+
+    int add_errors = 0;
     for (int x = 0; x < NUM_VALUES; x++) {
         for (int y = 0; y < NUM_VALUES; y++) {
             int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
             int carry = 0;        
-            for (int z = 0; z < BIT_WIDTH; z++) {
-                a[z] = (x >> z) & 1;
-                b[z] = (y >> z) & 1;
-            }
+            to_bits(x, a);
+            to_bits(y, b);
 
            for (int z = 0; z < BIT_WIDTH; z++) {
                 add_result r = full_adder(a[z], b[z], carry);
@@ -138,44 +176,24 @@ int main(void) {
             for (int z = 0; z < BIT_WIDTH; z++) {
                 int expected_bit = (expected >> z) & 1;
                 if (result[z] != expected_bit) {
-                    errors++;
+                    add_errors++;
                 }
             }
 
             if (carry != ((expected >> BIT_WIDTH) & 1)) {
-                errors++;
+                add_errors++;
             }
         }
     }   
-    printf("errors: %d\n", errors);
+    printf("\naddition errors: %d\n", add_errors);
 
-       
-    int c[BIT_WIDTH] = {1, 1 , 1, 0}; // 7
-    int d[BIT_WIDTH] = {1, 1, 0, 0}; // 3
-    int result1[BIT_WIDTH];
-    int carry1 = 1;
-
-    printf("\nFinal Subtract Result: ");
-    for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
-        result1[i] = r.sum;
-        carry1 = r.carry;
-    }
-
-    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
-        printf("%d, ", result1[i]); 
-    }
-    printf("\nFinal carry: %d\n", carry1);
-
-    int errors1 = 0;
+    int sub_errors = 0;
     for (int x = 0; x < NUM_VALUES; x++) {
         for (int y = 0; y < NUM_VALUES; y++) {
             int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
             int carry = 1;        
-            for (int z = 0; z < BIT_WIDTH; z++) {
-                a[z] = (x >> z) & 1;
-                b[z] = (y >> z) & 1;
-            }
+            to_bits(x, a);
+            to_bits(y, b);
 
            for (int z = 0; z < BIT_WIDTH; z++) {
                 add_result r = full_adder(a[z], not_gate(b[z]), carry);
@@ -188,12 +206,12 @@ int main(void) {
             for (int z = 0; z < BIT_WIDTH; z++) {
                 int expected_bit = (expected >> z) & 1;
                 if (result[z] != expected_bit) {
-                    errors1++;
+                    sub_errors++;
                 }
             }
         }
     }   
-    printf("errors: %d\n", errors1);
+    printf("subtraction errors: %d\n", sub_errors);
 
     return 0;
 }
