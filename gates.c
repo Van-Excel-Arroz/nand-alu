@@ -8,6 +8,8 @@ typedef struct add_result {
     int carry;
 } add_result;
 
+typedef int (*gate_fn)(int, int);
+
 enum { ADD = 0, SUB = 1 };
 
 int nand(int a, int b) {
@@ -30,6 +32,15 @@ int xor_gate(int a, int b) {
     int x = and_gate(not_gate(a), b);
     int y = and_gate(a, not_gate(b));
     return or_gate(x, y);
+}
+
+void print_truth_table(const char *name, gate_fn gate) {
+    printf("\na b | %s\n", name);
+    for (int i = 0; i <= 1; i++) {
+        for (int j = 0; j <= 1; j++) {
+            printf("%d %d | %d\n", i, j, gate(i, j));
+        }
+    }
 }
 
 add_result half_adder(int a, int b) {
@@ -70,15 +81,15 @@ int from_bits(const int bits[BIT_WIDTH]) {
 int add_sub(
     const int x_bits[BIT_WIDTH], 
     const int y_bits[BIT_WIDTH],
-    int operator,
+    int op,
     int result[BIT_WIDTH]) 
 {
-    int subtract = (operator != 0);
+    int subtract = (op != 0);
     int carry = subtract;
 
     for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(x_bits[i], xor_gate(y_bits[i], subtract), carry);
         // XOR helps to flip the y bits for subtracting
+        add_result r = full_adder(x_bits[i], xor_gate(y_bits[i], subtract), carry);
         result[i] = r.sum;
         carry = r.carry;
     }
@@ -92,40 +103,17 @@ void print_bits(const int bits[BIT_WIDTH]) {
 }
 
 int main(void) {
-    printf("a b | nand\n");
-    for (int i = 0; i <= 1; i++) {
-        for (int j = 0; j <= 1; j++) {
-            printf("%d %d | %d\n", i, j, nand(i, j));
-        }
-    }
-    
-    printf("a | NOT using nand\n");
+    print_truth_table("NAND", nand);
+    print_truth_table("AND", and_gate);
+    print_truth_table("OR", or_gate);
+    print_truth_table("XOR", xor_gate);
+
+    printf("\na | NOT using nand\n");
     for (int i = 0; i <= 1; i++) {
         printf("%d | %d\n", i, not_gate(i));
     }
 
-    printf("a b | AND using nand\n");
-    for (int i = 0; i <= 1; i++) {
-        for (int j = 0; j <= 1; j++) {
-            printf("%d %d | %d\n", i, j, and_gate(i, j));
-        }
-    }
-    
-    printf("a b | OR using nand\n");
-    for (int i = 0; i <= 1; i++) {
-        for (int j = 0; j <= 1; j++) {
-            printf("%d %d | %d\n", i, j, or_gate(i, j));
-        }
-    }
-
-    printf("a b | XOR using nand\n");
-    for (int i = 0; i <= 1; i++) {
-        for (int j = 0; j <= 1; j++) {
-            printf("%d %d | %d\n", i, j, xor_gate(i, j));
-        }
-    }
-
-    printf("a b | carry sum\n");
+    printf("\na b | carry sum\n");
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
             add_result r = half_adder(i, j);
@@ -133,7 +121,7 @@ int main(void) {
         }
     }
 
-    printf("a b cin | carry sum\n");
+    printf("\na b cin | carry sum\n");
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
             for (int k = 0; k <= 1; k++) {
