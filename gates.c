@@ -65,6 +65,41 @@ int from_bits(const int bits[BIT_WIDTH]) {
     return value;
 }
 
+int add_bits(
+    const int x_bits[BIT_WIDTH], 
+    const int y_bits[BIT_WIDTH],
+    int result[BIT_WIDTH]) 
+{
+    int carry = 0;
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        add_result r = full_adder(x_bits[i], y_bits[i], carry);
+        result[i] = r.sum;
+        carry = r.carry;
+    }
+    return carry;
+}
+
+int sub_bits(
+    const int x_bits[BIT_WIDTH], 
+    const int y_bits[BIT_WIDTH],
+    int result[BIT_WIDTH]) 
+{
+    int carry = 1;
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        add_result r = full_adder(x_bits[i], not_gate(y_bits[i]), carry);
+        result[i] = r.sum;
+        carry = r.carry;
+    }
+    return carry;
+}
+
+void print_bits(const int bits[BIT_WIDTH]) {
+    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
+        printf("%d", bits[i]);
+    }
+}
+
+
 int main(void) {
     printf("a b | nand\n");
     for (int i = 0; i <= 1; i++) {
@@ -117,60 +152,33 @@ int main(void) {
         }
     }
 
-    int a[BIT_WIDTH];
-    int b[BIT_WIDTH];
-    to_bits(5, a);
-    to_bits(3, b);
+    int x_bits[BIT_WIDTH];
+    int y_bits[BIT_WIDTH];
+    to_bits(5, x_bits);
+    to_bits(3, y_bits);
     int result[BIT_WIDTH];
-    int carry = 0;
+    int final_carry = add_bits(x_bits, y_bits, result);
 
-    for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(a[i], b[i], carry);
-        result[i] = r.sum;
-        carry = r.carry;
-    }
-    
     printf("\nFinal Add Result (Binary): ");
-    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
-        printf("%d, ", result[i]);
-    }
+    print_bits(result);
     printf("\nFinal Add Result (Decimal): %d", from_bits(result));
-    printf("\nFinal carry: %d\n", carry);
+    printf("\nFinal carry: %d\n", final_carry);
        
-    int c[BIT_WIDTH];
-    int d[BIT_WIDTH];
-    to_bits(7, c);
-    to_bits(3, d);
-    int result1[BIT_WIDTH];
-    int carry1 = 1;
-
-    for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(c[i], not_gate(d[i]), carry1);
-        result1[i] = r.sum;
-        carry1 = r.carry;
-    }
+    to_bits(3, x_bits);
+    to_bits(7, y_bits);
+    final_carry = sub_bits(x_bits, y_bits, result);
     
     printf("\nFinal Subtract Result (Binary): ");
-    for (int i = BIT_WIDTH - 1; i >= 0; i--) {
-        printf("%d, ", result1[i]); 
-    }
-    printf("\nFinal Subtract Result (Decimal): %d", from_bits(result1));
-    printf("\nFinal carry: %d\n", carry1);
+    print_bits(result);
+    printf("\nFinal Subtract Result (Decimal): %d", from_bits(result));
+    printf("\nFinal carry: %d\n", final_carry);
 
     int add_errors = 0;
     for (int x = 0; x < NUM_VALUES; x++) {
         for (int y = 0; y < NUM_VALUES; y++) {
-            int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
-            int carry = 0;        
-            to_bits(x, a);
-            to_bits(y, b);
-
-           for (int z = 0; z < BIT_WIDTH; z++) {
-                add_result r = full_adder(a[z], b[z], carry);
-                result[z] = r.sum;
-                carry = r.carry;
-           }
-
+            to_bits(x, x_bits);
+            to_bits(y, y_bits);
+            final_carry = add_bits(x_bits, y_bits, result);        
             int expected = x + y;
 
             for (int z = 0; z < BIT_WIDTH; z++) {
@@ -180,7 +188,7 @@ int main(void) {
                 }
             }
 
-            if (carry != ((expected >> BIT_WIDTH) & 1)) {
+            if (final_carry != ((expected >> BIT_WIDTH) & 1)) {
                 add_errors++;
             }
         }
@@ -190,17 +198,9 @@ int main(void) {
     int sub_errors = 0;
     for (int x = 0; x < NUM_VALUES; x++) {
         for (int y = 0; y < NUM_VALUES; y++) {
-            int a[BIT_WIDTH], b[BIT_WIDTH], result[BIT_WIDTH];
-            int carry = 1;        
-            to_bits(x, a);
-            to_bits(y, b);
-
-           for (int z = 0; z < BIT_WIDTH; z++) {
-                add_result r = full_adder(a[z], not_gate(b[z]), carry);
-                result[z] = r.sum;
-                carry = r.carry;
-           }
-
+            to_bits(x, x_bits);
+            to_bits(y, y_bits);
+            sub_bits(x_bits, y_bits, result);        
             int expected = (x - y) & MAX_VALUE;
 
             for (int z = 0; z < BIT_WIDTH; z++) {
