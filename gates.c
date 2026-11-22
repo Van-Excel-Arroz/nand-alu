@@ -8,6 +8,8 @@ typedef struct add_result {
     int carry;
 } add_result;
 
+enum { ADD = 0, SUB = 1 };
+
 int nand(int a, int b) {
     return !(a && b);
 }
@@ -65,28 +67,18 @@ int from_bits(const int bits[BIT_WIDTH]) {
     return value;
 }
 
-int add_bits(
+int add_sub(
     const int x_bits[BIT_WIDTH], 
     const int y_bits[BIT_WIDTH],
+    int operator,
     int result[BIT_WIDTH]) 
 {
-    int carry = 0;
-    for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(x_bits[i], y_bits[i], carry);
-        result[i] = r.sum;
-        carry = r.carry;
-    }
-    return carry;
-}
+    int subtract = (operator != 0);
+    int carry = subtract;
 
-int sub_bits(
-    const int x_bits[BIT_WIDTH], 
-    const int y_bits[BIT_WIDTH],
-    int result[BIT_WIDTH]) 
-{
-    int carry = 1;
     for (int i = 0; i < BIT_WIDTH; i++) {
-        add_result r = full_adder(x_bits[i], not_gate(y_bits[i]), carry);
+        add_result r = full_adder(x_bits[i], xor_gate(y_bits[i], subtract), carry);
+        // XOR helps to flip the y bits for subtracting
         result[i] = r.sum;
         carry = r.carry;
     }
@@ -98,7 +90,6 @@ void print_bits(const int bits[BIT_WIDTH]) {
         printf("%d", bits[i]);
     }
 }
-
 
 int main(void) {
     printf("a b | nand\n");
@@ -157,7 +148,7 @@ int main(void) {
     to_bits(5, x_bits);
     to_bits(3, y_bits);
     int result[BIT_WIDTH];
-    int final_carry = add_bits(x_bits, y_bits, result);
+    int final_carry = add_sub(x_bits, y_bits, ADD, result);
 
     printf("\nFinal Add Result (Binary): ");
     print_bits(result);
@@ -166,7 +157,7 @@ int main(void) {
        
     to_bits(3, x_bits);
     to_bits(7, y_bits);
-    final_carry = sub_bits(x_bits, y_bits, result);
+    final_carry = add_sub(x_bits, y_bits, SUB, result);
     
     printf("\nFinal Subtract Result (Binary): ");
     print_bits(result);
@@ -178,7 +169,7 @@ int main(void) {
         for (int y = 0; y < NUM_VALUES; y++) {
             to_bits(x, x_bits);
             to_bits(y, y_bits);
-            final_carry = add_bits(x_bits, y_bits, result);        
+            final_carry = add_sub(x_bits, y_bits, ADD, result);
             int expected = x + y;
 
             for (int z = 0; z < BIT_WIDTH; z++) {
@@ -200,7 +191,7 @@ int main(void) {
         for (int y = 0; y < NUM_VALUES; y++) {
             to_bits(x, x_bits);
             to_bits(y, y_bits);
-            sub_bits(x_bits, y_bits, result);        
+            add_sub(x_bits, y_bits, SUB, result);      
             int expected = (x - y) & MAX_VALUE;
 
             for (int z = 0; z < BIT_WIDTH; z++) {
