@@ -10,9 +10,12 @@ typedef struct add_result {
 
 typedef int (*gate_fn)(int, int);
 
+static int nand_count = 0;
+
 enum { ADD = 0, SUB = 1 };
 
 int nand(int a, int b) {
+    nand_count++;
     return !(a && b);
 }
 
@@ -29,9 +32,10 @@ int or_gate(int a, int b) {
 }
 
 int xor_gate(int a, int b) {
-    int x = and_gate(not_gate(a), b);
-    int y = and_gate(a, not_gate(b));
-    return or_gate(x, y);
+    int n1 = nand(a, b);
+    int n2 = nand(a, n1);
+    int n3 = nand(b, n1);
+    return nand(n2, n3);
 }
 
 void print_truth_table(const char *name, gate_fn gate) {
@@ -102,18 +106,25 @@ void print_bits(const int bits[BIT_WIDTH]) {
     }
 }
 
+void count_gate(const char* name, gate_fn gate) {
+    nand_count = 0;
+    gate(0, 0);
+    printf("%s gate uses %d NANDs\n", name, nand_count);
+}
+
 int main(void) {
+    printf("Truth Tables\n");
     print_truth_table("NAND", nand);
     print_truth_table("AND", and_gate);
     print_truth_table("OR", or_gate);
     print_truth_table("XOR", xor_gate);
 
-    printf("\na | NOT using nand\n");
+    printf("\na | NOT\n");
     for (int i = 0; i <= 1; i++) {
         printf("%d | %d\n", i, not_gate(i));
     }
 
-    printf("\na b | carry sum\n");
+    printf("\na b | carry sum (half adder)\n");
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
             add_result r = half_adder(i, j);
@@ -121,7 +132,7 @@ int main(void) {
         }
     }
 
-    printf("\na b cin | carry sum\n");
+    printf("\na b cin | carry sum (full adder)\n");
     for (int i = 0; i <= 1; i++) {
         for (int j = 0; j <= 1; j++) {
             for (int k = 0; k <= 1; k++) {
@@ -131,12 +142,28 @@ int main(void) {
         }
     }
 
+    nand_count = 0;
+    not_gate(0);
+    printf("\nNOT gate uses %d NANDs\n", nand_count);
+    count_gate("AND", and_gate);
+    count_gate("OR", or_gate);
+    count_gate("XOR", xor_gate);
+
     int x_bits[BIT_WIDTH];
     int y_bits[BIT_WIDTH];
     to_bits(5, x_bits);
     to_bits(3, y_bits);
     int result[BIT_WIDTH];
+
+    nand_count = 0;
+    half_adder(0, 0);
+    printf("half_adder gates uses %d NANDs\n", nand_count);
+    nand_count = 0;
+    full_adder(0, 0, 0);
+    printf("full_adder gates uses %d NANDs\n", nand_count);
+    nand_count = 0;
     int final_carry = add_sub(x_bits, y_bits, ADD, result);
+    printf("add_sub gates uses %d NANDs\n", nand_count);
 
     printf("\nFinal Add Result (Binary): ");
     print_bits(result);
