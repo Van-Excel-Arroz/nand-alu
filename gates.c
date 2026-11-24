@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #define BIT_WIDTH 4
 #define NUM_VALUES (1 << BIT_WIDTH)
 #define MAX_VALUE (NUM_VALUES - 1)
@@ -10,9 +11,20 @@ typedef struct add_result {
 
 typedef int (*gate_fn)(int, int);
 
+typedef struct {
+    int zero;
+    int negative;
+    int carry;
+} alu_flags;
+
 static int nand_count = 0;
 
-enum { ADD = 0, SUB = 1 };
+enum { 
+    ADD = 0, 
+    SUB = 1, 
+    AND = 2, 
+    OR = 3
+};
 
 int nand(int a, int b) {
     nand_count++;
@@ -100,6 +112,47 @@ int add_sub(
     return carry;
 }
 
+alu_flags alu(
+    const int x_bits[BIT_WIDTH], 
+    const int y_bits[BIT_WIDTH],
+    int op,
+    int result[BIT_WIDTH]) 
+{
+    alu_flags f;
+    f.carry = 0;
+    
+    switch (op) {
+        case ADD:
+        case SUB:
+            f.carry = add_sub(x_bits, y_bits, op, result);
+            break;
+        case AND:
+            for (int i = 0; i < BIT_WIDTH; i++) {
+                result[i] = and_gate(x_bits[i], y_bits[i]);
+            }
+            break;
+        case OR:
+            for (int i = 0; i < BIT_WIDTH; i++) {
+                result[i] = or_gate(x_bits[i], y_bits[i]);
+            }
+            break;
+        default:
+            assert(0 && "Unknown ALU op.\n");
+    }
+
+    // zero flag
+    int any_one = 0;
+    for (int i = 0; i < BIT_WIDTH; i++) {
+        any_one = or_gate(result[i], any_one);
+    }
+    f.zero = not_gate(any_one);
+    
+    // negative flag
+    f.negative = result[BIT_WIDTH - 1];
+
+    return f;
+}
+
 void print_bits(const int bits[BIT_WIDTH]) {
     for (int i = BIT_WIDTH - 1; i >= 0; i--) {
         printf("%d", bits[i]);
@@ -142,6 +195,9 @@ int main(void) {
         }
     }
 
+    int a = 3;
+    int b = 7;
+
     nand_count = 0;
     not_gate(0);
     printf("\nNOT gate uses %d NANDs\n", nand_count);
@@ -151,8 +207,8 @@ int main(void) {
 
     int x_bits[BIT_WIDTH];
     int y_bits[BIT_WIDTH];
-    to_bits(5, x_bits);
-    to_bits(3, y_bits);
+    to_bits(a, x_bits);
+    to_bits(b, y_bits);
     int result[BIT_WIDTH];
 
     nand_count = 0;
@@ -169,9 +225,9 @@ int main(void) {
     print_bits(result);
     printf("\nFinal Add Result (Decimal): %d", from_bits(result));
     printf("\nFinal carry: %d\n", final_carry);
-       
-    to_bits(3, x_bits);
-    to_bits(7, y_bits);
+
+    to_bits(a, x_bits);
+    to_bits(b, y_bits);
     final_carry = add_sub(x_bits, y_bits, SUB, result);
     
     printf("\nFinal Subtract Result (Binary): ");
@@ -218,6 +274,34 @@ int main(void) {
         }
     }   
     printf("subtraction errors: %d\n", sub_errors);
+
+    int alu_errors = 0;
+    for (int op = ADD; op <= OR; op++) {
+        for (int x = 0; x < NUM_VALUES; x++) {
+            for (int y = 0; y < NUM_VALUES; y++) {
+                to_bits(x, x_bits);
+                to_bits(y, y_bits);
+                alu_flags f = alu(x_bits, y_bits, op, result);
+                int expected = 0;
+
+                switch (op) {
+                    case ADD:  expected = (x + y) & MAX_VALUE; break;
+                    case SUB:  expected = (x - y) & MAX_VALUE; break;
+                    case AND:  expected = (x & y) & MAX_VALUE; break;
+                    case OR:   expected = (x | y) & MAX_VALUE; break;
+                }
+                
+                if (from_bits(result) != expected) {
+                    alu_errors++;
+                }
+
+                if (f.zero != (expected == 0)) {
+                    alu_errors++;
+                }
+            }
+        }
+    }
+    printf("ALU errors: %d\n", alu_errors);
 
     return 0;
 }
